@@ -6,14 +6,15 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.Duration;
 import java.util.List;
 
@@ -73,7 +74,7 @@ public class SwagLabsTests {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         WebElement error = wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("[data-test='error']")));
         String expected = "Epic sadface: Username and password do not match any user in this service";
-        Assert.assertEquals(error.getText(),expected);
+        Assert.assertEquals(error.getText(), expected);
 
     }
 
@@ -132,8 +133,9 @@ public class SwagLabsTests {
         Assert.assertEquals(cartItem.getText(), "1");
 
     }
+
     @Test
-    public void viewingProductdetails(){
+    public void viewingProductdetails() {
         WebElement username = driver.findElement(By.id("user-name"));
         WebElement password = driver.findElement(By.id("password"));
         username.sendKeys(" locked_out_user");
@@ -143,18 +145,19 @@ public class SwagLabsTests {
         WebElement login = driver.findElement(By.name("login-button"));
         login.click();
         Assert.assertEquals(driver.getCurrentUrl(), "https://www.saucedemo.com/inventory.html");
-        WebElement backPack=driver.findElement(By.xpath("//div[text()='Sauce Labs BackPack']"));
+        WebElement backPack = driver.findElement(By.xpath("//div[text()='Sauce Labs BackPack']"));
         backPack.click();
-        WebElement price= driver.findElement(By.className("inventory_details_price"));
-        WebElement description=driver.findElement(By.className("inventory_details_desc"));
-        WebElement addCart=driver.findElement(By.name("add-to-cart-sauce-labs-backpack"));
+        WebElement price = driver.findElement(By.className("inventory_details_price"));
+        WebElement description = driver.findElement(By.className("inventory_details_desc"));
+        WebElement addCart = driver.findElement(By.name("add-to-cart-sauce-labs-backpack"));
         Assert.assertTrue(price.isDisplayed());
         Assert.assertTrue(description.isDisplayed());
         Assert.assertTrue(addCart.isDisplayed());
 
     }
+
     @Test
-    public void  removingProductsFromCart(){
+    public void removingProductsFromCart() {
         WebElement username = driver.findElement(By.id("user-name"));
         WebElement password = driver.findElement(By.id("password"));
         username.sendKeys(" locked_out_user");
@@ -167,17 +170,18 @@ public class SwagLabsTests {
         addToCartBtn.click();
         WebElement cartItem = driver.findElement(By.cssSelector(".shopping_cart_badge"));
         Assert.assertEquals(cartItem.getText(), "1");
-        WebElement cart=driver.findElement(By.className("shopping_cart_link"));
+        WebElement cart = driver.findElement(By.className("shopping_cart_link"));
         cart.click();
-        List<WebElement> products= driver.findElements(By.xpath("//div[text()='Sauce Labs Bbackpack']"));
+        List<WebElement> products = driver.findElements(By.xpath("//div[text()='Sauce Labs Bbackpack']"));
         WebElement removeButn = driver.findElement(By.name("remove-sauce-labs-backpack"));
         removeButn.click();
-        products=driver.findElements(By.xpath("//div[text()='Sauce Labs Bbackpack']"));
+        products = driver.findElements(By.xpath("//div[text()='Sauce Labs Bbackpack']"));
         Assert.assertEquals(products.size(), 0);
 
     }
+
     @Test
-public void productCheckout(){
+    public void productCheckout() {
         WebElement username = driver.findElement(By.id("user-name"));
         WebElement password = driver.findElement(By.id("password"));
         username.sendKeys(" locked_out_user");
@@ -190,7 +194,7 @@ public void productCheckout(){
         addToCartBtn.click();
         WebElement cartItem = driver.findElement(By.cssSelector(".shopping_cart_badge"));
         Assert.assertEquals(cartItem.getText(), "1");
-        WebElement cart=driver.findElement(By.className("shopping_cart_link"));
+        WebElement cart = driver.findElement(By.className("shopping_cart_link"));
         cart.click();
         WebElement checkoutButton = driver.findElement(By.id("checkout"));
         checkoutButton.click();
@@ -213,11 +217,51 @@ public void productCheckout(){
         Assert.assertTrue(orderConfirmation.isDisplayed());
 
     }
-   @AfterMethod
-    public void afterMethod(){
-       ((JavascriptExecutor) driver).executeScript("window.localStorage.clear();");
+
+    @Test
+    public void validateSocialLinksInFooter() {
+        WebElement username = driver.findElement(By.id("user-name"));
+        WebElement password = driver.findElement(By.id("password"));
+        username.sendKeys(" locked_out_user");
+        password.sendKeys("secret_sauce");
+        WebElement login = driver.findElement(By.name("login-button"));
+        login.click();
+        Assert.assertEquals(driver.getCurrentUrl(), "https://www.saucedemo.com/inventory.html");
+        new Actions(driver).scrollToElement(driver.findElement(By.className("footer_copy"))).perform();
+
+        List<WebElement> links = driver.findElements(By.cssSelector(".social a"));
+        for (int i = 0; i < links.size(); i++) {
+            String url = links.get(i).getAttribute("href");
+
+            try {
+                Assert.assertEquals(getHTTPResponseStatusCode(url), 200,
+                        "Response status code should be 200");
+            } catch (Exception e) {
+
+            }
+        }
+    }
+
+    public static int getHTTPResponseStatusCode(String u) throws IOException {
+        URL url = new URL(u);
+
+        HttpURLConnection http = (HttpURLConnection) url.openConnection();
+        return http.getResponseCode();
+
+
+    }
+
+    @AfterMethod
+    public void afterMethod() {
+        ((JavascriptExecutor) driver).executeScript("window.localStorage.clear();");
+    }
+
+    @AfterClass
+    public void quit() {
+        driver.quit();
     }
 }
+
 
 
 
